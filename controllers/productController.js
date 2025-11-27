@@ -1,4 +1,5 @@
 const Product = require("../models/productModel");
+const { sendApiResponse } = require("../utils/apiResponses");
 
 // sample in-memory store
 let inMemoryProducts = [
@@ -23,31 +24,58 @@ let inMemoryProducts = [
 async function listProducts(req, res) {
   if (process.env.MONGO_URI) {
     const products = await Product.find().lean();
-    return res.json(products);
+    // return res.json(products);
+    return sendApiResponse(res, 200, true, "Products fetched successfully", {
+      products,
+    });
   }
-  res.json(inMemoryProducts);
+  //   res.json(inMemoryProducts);
+  return sendApiResponse(res, 200, true, "Products fetched successfully", {
+    products: inMemoryProducts,
+  });
 }
 
 async function getProduct(req, res) {
   const id = req.params.id;
+
   if (process.env.MONGO_URI) {
-    const p = await Product.findById(id);
-    if (!p) return res.status(404).json({ message: "Not found" });
-    return res.json(p);
+    const product = await Product.findById(id);
+    if (!product) {
+      //   return res.status(404).json({ message: "Not found" });
+      return sendApiResponse(res, 404, false, "No product found", { product });
+    }
+    // return res.json(product);
+    return sendApiResponse(res, 200, true, "Product details fetched", {
+      product,
+    });
   }
-  const p = inMemoryProducts.find((x) => x.id === id);
-  if (!p) return res.status(404).json({ message: "Not found" });
-  return res.json(p);
+
+  const product = inMemoryProducts.find((x) => x.id === id);
+  if (!product) {
+    // return res.status(404).json({ message: "Not found" });
+    return sendApiResponse(res, 404, false, "No product found", { product });
+  }
+
+  //   return res.json(product);
+  return sendApiResponse(res, 200, true, "Product details fetched", {
+    product,
+  });
 }
 
 async function createProduct(req, res) {
   const { title, description, price, image, stock } = req.body;
-  if (!title || price == null)
-    return res.status(400).json({ message: "title and price required" });
+
+  if (!title || price == null) {
+    // return res.status(400).json({ message: "title and price required" });
+    return sendApiResponse(res, 400, false, "title and price required");
+  }
 
   if (process.env.MONGO_URI) {
     const p = await Product.create({ title, description, price, image, stock });
-    return res.status(201).json(p);
+    // return res.status(201).json(p);
+    return sendApiResponse(res, 201, true, "Product Added successfully", {
+      product: p,
+    });
   }
 
   const newP = {
@@ -58,22 +86,44 @@ async function createProduct(req, res) {
     image,
     stock: stock || 0,
   };
+
   inMemoryProducts.push(newP);
-  return res.status(201).json(newP);
+
+  //   return res.status(201).json(newP);
+  return sendApiResponse(res, 201, true, "Product Added successfully", {
+    product: newP,
+  });
 }
 
 async function updateProduct(req, res) {
   const id = req.params.id;
+
   const payload = req.body;
+
   if (process.env.MONGO_URI) {
     const p = await Product.findByIdAndUpdate(id, payload, { new: true });
-    if (!p) return res.status(404).json({ message: "Not found" });
-    return res.json(p);
+    if (!p) {
+      // return res.status(404).json({ message: "Not found" });
+      return sendApiResponse(res, 404, false, "No such product found");
+    }
+    // return res.json(p);
+    return sendApiResponse(res, 200, true, "Product updated successfully", {
+      product: p,
+    });
   }
+
   const idx = inMemoryProducts.findIndex((x) => x.id === id);
-  if (idx === -1) return res.status(404).json({ message: "Not found" });
+
+  if (idx === -1) {
+    //   return res.status(404).json({ message: "Not found" });
+    return sendApiResponse(res, 404, false, "No such product found");
+  }
   inMemoryProducts[idx] = { ...inMemoryProducts[idx], ...payload };
-  return res.json(inMemoryProducts[idx]);
+
+  //   return res.json(inMemoryProducts[idx]);
+  return sendApiResponse(res, 200, true, "Product updated successfully", {
+    product: inMemoryProducts[idx],
+  });
 }
 
 async function deleteProduct(req, res) {

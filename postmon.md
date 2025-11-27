@@ -4,6 +4,8 @@
 
 ```
 http://localhost:4000/api
+
+https://lecture.codedrift.co/api
 ```
 
 ---
