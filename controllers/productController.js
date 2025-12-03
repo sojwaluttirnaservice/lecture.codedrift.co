@@ -130,10 +130,12 @@ async function deleteProduct(req, res) {
   const id = req.params.id;
   if (process.env.MONGO_URI) {
     await Product.findByIdAndDelete(id);
-    return res.json({ message: "deleted" });
+    // return res.json({ message: "deleted" });
+    return sendApiResponse(res, 200, true, "Product deleted successfully");
   }
   inMemoryProducts = inMemoryProducts.filter((x) => x.id !== id);
-  return res.json({ message: "deleted" });
+  //   return res.json({ message: "deleted" });
+  return sendApiResponse(res, 200, true, "Product deleted successfully");
 }
 
 module.exports = {

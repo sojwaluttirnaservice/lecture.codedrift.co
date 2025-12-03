@@ -56,15 +56,15 @@ async function login(req, res) {
     const user = await User.findOne({ username });
 
     if (!user) {
-        // return res.status(401).json({ message: "Invalid creds" });
-        return sendApiResponse(res, 401, false, "Invalid credentials")
+      // return res.status(401).json({ message: "Invalid creds" });
+      return sendApiResponse(res, 401, false, "Invalid credentials");
     }
 
     const ok = await bcrypt.compare(password, user.passwordHash);
 
     if (!ok) {
-        // return res.status(401).json({ message: "Invalid creds" });
-        return sendApiResponse(res, 401, false, "Invalid credentials")
+      // return res.status(401).json({ message: "Invalid creds" });
+      return sendApiResponse(res, 401, false, "Invalid credentials");
     }
 
     const token = jwt.sign(
@@ -76,23 +76,23 @@ async function login(req, res) {
     // return res.json({ token, user: { id: user._id, username: user.username } });
 
     return sendApiResponse(res, 200, true, "Login Successful", {
-        token, 
-        user: { id: user._id, username: user.username } 
-    })
+      token,
+      user: { id: user._id, username: user.username },
+    });
   }
 
   const user = inMemoryUsers.find((u) => u.username === username);
 
-  if (!user){
+  if (!user) {
     //   return res.status(401).json({ message: "Invalid creds" });
-    return sendApiResponse(res, 401, false, "Invalid credentials")
-  } 
+    return sendApiResponse(res, 401, false, "Invalid credentials");
+  }
 
   const ok = await bcrypt.compare(password, user.passwordHash);
 
   if (!ok) {
     // return res.status(401).json({ message: "Invalid creds" });
-    return sendApiResponse(res, 401, false, "Invalid credentials")
+    return sendApiResponse(res, 401, false, "Invalid credentials");
   }
 
   const token = jwt.sign(
@@ -101,11 +101,30 @@ async function login(req, res) {
     { expiresIn: "7d" }
   );
 
-//   return res.json({ token, user: { id: user.id, username: user.username } });
-    return sendApiResponse(res, 200, true, "Login Successful", {
-        token, 
-        user: { id: user._id, username: user.username } 
-    })
+  //   return res.json({ token, user: { id: user.id, username: user.username } });
+  return sendApiResponse(res, 200, true, "Login Successful", {
+    token,
+    user: { id: user._id, username: user.username },
+  });
 }
 
-module.exports = { register, login };
+async function verify(req, res) {
+  try {
+    const header = req.headers.authorization;
+    const token = header.split(" ")[1];
+
+    const payload = jwt.verify(token, process.env.JWT_SECRET || "dev_secret");
+
+    if (payload) {
+      return sendApiResponse(res, 200, true, "Verfied");
+    }
+
+    // return res.status(401).json ({ message: "Invalid token" });
+    return sendApiResponse(res, 401, false, "Invalid token");
+  } catch (err) {
+    console.error("Error:", err);
+    return sendApiResponse(res, 401, false, "Invalid token");
+  }
+}
+
+module.exports = { register, login, verify };
